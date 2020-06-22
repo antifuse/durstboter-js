@@ -19,10 +19,17 @@ client.on('ready',()=> {
 client.on('message', message => {
     if(!message.content.startsWith(prefix) || message.author.bot) return;
     const args = message.content.slice(prefix.length).split(/ +/);
-    const command = args.shift().toLowerCase();
-    if (!client.commands.has(command)) return;
+    const commandCall = args.shift().toLowerCase();
+    const command = client.commands.get(commandCall) || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandCall));
+    if (!command) return;
     try {
-        client.commands.get(command).execute(message, args);
+        for (let perm of command.permissions) {
+            if (!message.member.hasPermission(perm)) {
+                message.channel.send('<:wirklich:711126263514792019>');
+                return;
+            }
+        }
+        command.execute(message, args);
     } catch (e) {
         console.error(e);
         message.channel.send('<:nundann:724343174256001135>');
