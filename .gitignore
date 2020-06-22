@@ -2,3 +2,5 @@
 /node_modules/
 /messages.txt
 /config.json
+/.idea/workspace.xml
+/.idea/deployment.xml

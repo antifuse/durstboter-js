@@ -52,12 +52,16 @@ client.on('message', message => {
 });
 
 // Automatic answers:
-const reactions = require('./reactions.json');
+let reactions = require('./reactions.json');
 client.on('message', message => {
     if (message.author.bot) return;
     for (let r in reactions) {
         if (message.content.toLowerCase().match(r)) message.channel.send(reactions[r]);
     }
+});
+
+fs.watch('./reactions.json',(event,name)=> {
+    reactions = require('./reactions.json');
 });
 
 client.login(token).then(r => console.log(r));
