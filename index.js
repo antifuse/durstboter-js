@@ -36,6 +36,7 @@ client.on('message', message => {
     fs.appendFile('messages.txt', `${message.author.tag}/${message.channel.id}: ${message.content}\n`,(err)=> {
         if (err) console.log(err);
     });
+    if (message.author.id === '235148962103951360' && message.channel.id !== '568569976366301205') message.delete().then(r => console.log(`Carl message deleted: ${r.content}`));
     // log dms to dmlog
     if (message.channel.type === 'dm') {
         client.channels.fetch(dmlog)
