@@ -1,5 +1,5 @@
 const Discord = require('discord.js');
-const {prefix,token,dmlog} = require('./config.json');
+const {prefix,token,dmlog,logoptout} = require('./config.json');
 const fs = require('fs');
 
 const client = new Discord.Client();
@@ -40,7 +40,7 @@ client.on('message', message => {
 client.on('message', message => {
     // log message
     console.log(message.content);
-    fs.appendFile('messages.txt', `${message.author.tag}/${message.channel.id}: ${message.content}\n`,(err)=> {
+    if (!logoptout.includes(message.author.id)) fs.appendFile('messages.txt', `${message.author.tag}/${message.channel.id}: ${message.content}\n`,(err)=> {
         if (err) console.log(err);
     });
     if (message.author.id === '235148962103951360' && message.channel.id !== '568569976366301205') message.delete().then(r => console.log(`Carl message deleted: ${r.content}`));

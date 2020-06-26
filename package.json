@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "catbox.moe": "^0.1.4",
     "discord.js": "^12.2.0"
   }
 }
