@@ -1,5 +1,5 @@
 const Discord = require('discord.js');
-const {prefix,token,dmlog,logoptout} = require('./config.json');
+let config = require('./config.json');
 const fs = require('fs');
 
 const client = new Discord.Client();
@@ -17,8 +17,8 @@ client.on('ready',()=> {
 
 // command handler
 client.on('message', message => {
-    if(!message.content.startsWith(prefix) || message.author.bot) return;
-    const args = message.content.slice(prefix.length).split(/ +/);
+    if(!message.content.startsWith(config.prefix) || message.author.bot) return;
+    const args = message.content.slice(config.prefix.length).split(/ +/);
     const commandCall = args.shift().toLowerCase();
     const command = client.commands.get(commandCall) || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandCall));
     if (!command) return;
@@ -40,13 +40,13 @@ client.on('message', message => {
 client.on('message', message => {
     // log message
     console.log(message.content);
-    if (!logoptout.includes(message.author.id)) fs.appendFile('messages.txt', `${message.author.tag}/${message.channel.id}: ${message.content}\n`,(err)=> {
+    if (!config.logoptout.includes(message.author.id)) fs.appendFile('messages.txt', `${message.author.tag}/${message.channel.id}: ${message.content}\n`,(err)=> {
         if (err) console.log(err);
     });
     if (message.author.id === '235148962103951360' && message.channel.id !== '568569976366301205') message.delete().then(r => console.log(`Carl message deleted: ${r.content}`));
     // log dms to dmlog
     if (message.channel.type === 'dm') {
-        client.channels.fetch(dmlog)
+        client.channels.fetch(config.dmlog)
             .then(channel => channel.send(`${message.author.tag} : ${message.content}`));
     }
 });
@@ -64,4 +64,8 @@ fs.watch('./reactions.json',(event,name)=> {
     reactions = require('./reactions.json');
 });
 
-client.login(token).then(r => console.log(r));
+fs.watch('./config.json',(event,name)=> {
+    config = require('./config.json');
+});
+
+client.login(config.token).then(r => console.log(r));
