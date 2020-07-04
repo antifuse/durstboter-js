@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "catbox.moe": "^0.1.4",
-    "discord.js": "^12.2.0"
+    "discord.js": "^12.2.0",
+    "snoowrap": "^1.21.0",
+    "ytdl-core": "^2.1.7"
   }
 }

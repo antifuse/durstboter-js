@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 let config = require('./config.json');
 const fs = require('fs');
-
+const reddit = require('./reddit/reddit');
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
 const commandFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('.js'));
@@ -22,6 +22,7 @@ client.on('message', message => {
     const commandCall = args.shift().toLowerCase();
     const command = client.commands.get(commandCall) || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandCall));
     if (!command) return;
+
     try {
         for (let perm of command.permissions) {
             if (!message.member.hasPermission(perm)) {
