@@ -2,7 +2,7 @@
   "name": "durstboter-js",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^14.0.14",
     "catbox.moe": "^0.1.4",
     "discord.js": "^12.2.0",
     "snoowrap": "^1.21.0",

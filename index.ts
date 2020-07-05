@@ -1,18 +1,57 @@
-const Discord = require('discord.js');
-let config = require('./config.json');
-const fs = require('fs');
-const reddit = require('./reddit/reddit');
+import Discord = require("discord.js");
+let config = require("./config.json");
+import fs = require("fs");
+import reddit = require("./reddit/reddit");
+import rparse = require("./reddit/redditParser");
+const {feeds} = require("./reddit/redditcfg.json");
+import {Collection, DMChannel, Message, PermissionResolvable, TextBasedChannel, TextChannel} from "discord.js";
+import {type} from "os";
+import Timeout = NodeJS.Timeout;
 const client = new Discord.Client();
-client.commands = new Discord.Collection();
+const commands: Collection<string, Command> = new Discord.Collection();
 const commandFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('.js'));
+
+interface Command {
+    permissions: PermissionResolvable[],
+    aliases: string[],
+    name: string,
+    description: string,
+    execute: (message: Message, args: Array<string>) => void
+}
+
+let updateFeeds = function(): void {
+    for (let feed in require("./reddit/redditcfg.json").feeds) {
+        updateFeed(feed);
+    }
+}
+
+let updateFeed = function(feedName: string): void {
+    reddit.getAllNewPosts(feedName).then((posts) => {
+        rparse.submissionsToEmbeds(posts)
+            .then((embeds) => {
+                let channels = require("./reddit/redditcfg.json").feeds[feedName].channels;
+                console.log(channels);
+                for (let m of embeds) {
+                    for (let c of channels) {
+                        client.channels.fetch(c).then((channel:TextChannel)=>{
+                            channel.send(m);
+                        })
+                    }
+                }
+            });
+    })
+}
+
 for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    client.commands.set(command.name, command);
+    const command: Command = require(`./commands/${file}`);
+    commands.set(command.name, command);
 }
 
 // Message on join
 client.on('ready',()=> {
     console.log('Yeet!');
+    updateFeeds();
+    let subchecker: Timeout = setInterval(updateFeeds, 300000);
 });
 
 // command handler
@@ -20,9 +59,8 @@ client.on('message', message => {
     if(!message.content.startsWith(config.prefix) || message.author.bot) return;
     const args = message.content.slice(config.prefix.length).split(/ +/);
     const commandCall = args.shift().toLowerCase();
-    const command = client.commands.get(commandCall) || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandCall));
+    const command: Command = commands.get(commandCall) || commands.find((cmd: Command) => cmd.aliases && cmd.aliases.includes(commandCall));
     if (!command) return;
-
     try {
         for (let perm of command.permissions) {
             if (!message.member.hasPermission(perm)) {
@@ -48,7 +86,7 @@ client.on('message', message => {
     // log dms to dmlog
     if (message.channel.type === 'dm') {
         client.channels.fetch(config.dmlog)
-            .then(channel => channel.send(`${message.author.tag} : ${message.content}`));
+            .then((channel: DMChannel) => channel.send(`${message.author.tag} : ${message.content}`));
     }
 });
 

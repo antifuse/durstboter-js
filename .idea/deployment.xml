@@ -7,6 +7,9 @@
           <mappings>
             <mapping deploy="/home/pi/Durstboter" local="$PROJECT_DIR$" web="/" />
           </mappings>
+          <excludedPaths>
+            <excludedPath path="/home/pi/Durstboter/node_modules" />
+          </excludedPaths>
         </serverdata>
       </paths>
     </serverData>
