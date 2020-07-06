@@ -7,6 +7,7 @@ const {feeds} = require("./reddit/redditcfg.json");
 import {Collection, DMChannel, Message, PermissionResolvable, TextBasedChannel, TextChannel} from "discord.js";
 import {type} from "os";
 import Timeout = NodeJS.Timeout;
+import {updateFeeds} from "./reddit/reddit";
 const client = new Discord.Client();
 const commands: Collection<string, Command> = new Discord.Collection();
 const commandFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('.js'));
@@ -19,28 +20,7 @@ interface Command {
     execute: (message: Message, args: Array<string>) => void
 }
 
-let updateFeeds = function(): void {
-    for (let feed in require("./reddit/redditcfg.json").feeds) {
-        updateFeed(feed);
-    }
-}
 
-let updateFeed = function(feedName: string): void {
-    reddit.getAllNewPosts(feedName).then((posts) => {
-        rparse.submissionsToEmbeds(posts)
-            .then((embeds) => {
-                let channels = require("./reddit/redditcfg.json").feeds[feedName].channels;
-                console.log(channels);
-                for (let m of embeds) {
-                    for (let c of channels) {
-                        client.channels.fetch(c).then((channel:TextChannel)=>{
-                            channel.send(m);
-                        })
-                    }
-                }
-            });
-    })
-}
 
 for (const file of commandFiles) {
     const command: Command = require(`./commands/${file}`);
@@ -48,10 +28,10 @@ for (const file of commandFiles) {
 }
 
 // Message on join
-client.on('ready',()=> {
+client.once('ready',()=> {
     console.log('Yeet!');
-    updateFeeds();
-    let subchecker: Timeout = setInterval(updateFeeds, 300000);
+    reddit.updateFeeds(client);
+    let subchecker: Timeout = setInterval(()=>{reddit.updateFeeds(client)}, 300000);
 });
 
 // command handler
