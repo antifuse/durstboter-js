@@ -1,131 +1,109 @@
-import snoowrap = require('snoowrap');
-import fs = require('fs');
-const rcfg = require("./redditcfg.json");
-import {Submission} from "snoowrap";
-import {Client, TextChannel, Webhook} from "discord.js";
-import {submissionsToEmbeds} from "./redditParser";
+export interface redditconfig {
+    subs: {name: string, channels: string[], hooks: string[], last: string}[],
+    webhooks: any,
+    clientId: string,
+    clientSecret: string,
+    refreshToken: string
+}
 
+import snoowrap = require('snoowrap');
+import {
+    Channel,
+    Client,
+    Collection, DMChannel,
+    PartialTextBasedChannel,
+    PartialTextBasedChannelFields, TextBasedChannel,
+    TextChannel, Webhook
+} from "discord.js";
+import {submissionToEmbed} from "./redditParser";
+import {SubmissionStream} from "snoostorm";
+import Submission from "snoowrap/dist/objects/Submission";
+let rcfg: redditconfig = require("./redditcfg.json");
+import fs = require("fs");
 const r = new snoowrap({
     userAgent: 'Durstboter',
     clientId: rcfg.clientId,
     clientSecret: rcfg.clientSecret,
     refreshToken: rcfg.refreshToken
 });
-
+let streams: Collection<string,SubmissionStream> = new Collection<string, SubmissionStream>();
 let updateCfg = function () {
     fs.writeFileSync('reddit/redditcfg.json', JSON.stringify(rcfg, null, 2));
 }
+export function init(client: Client) {
+    rcfg = require("./redditcfg.json");
+    for (let sub of rcfg.subs) {
+        let stream: SubmissionStream = new SubmissionStream(r,{subreddit: sub.name, limit: 1, pollTime: 20000});
+        stream.on('item', (submission)=>{sendToFeeds(submission, client)});
+        streams.set(sub.name, stream);
+    }
+}
 
-export async function getNewPosts(feedName: string, subName: string): Promise<Submission[]> {
-    if (feedName === 'test') {
-        rcfg.feeds['test'] = {subs: [], channels: [], hooks: []}
+let sendToFeeds = async function(submission: Submission, client: Client) {
+    if (submission.id === rcfg.subs.find((sub)=>{return sub.name === submission.subreddit_name_prefixed.slice(2)}).last) return;
+    rcfg.subs.find((sub)=>{return sub.name === submission.subreddit_name_prefixed.slice(2)}).last = submission.id;
+    let embed = await submissionToEmbed(submission);
+    let entry = rcfg.subs.find((sub)=>{return sub.name === submission.subreddit_name_prefixed.slice(2)});
+    for (let channelID of entry.channels) {
+        let channel: Channel = await client.channels.fetch(channelID);
+        if (channel instanceof (TextChannel || DMChannel)) {
+            channel.send(embed).then(r => console.log(`Sent post to ${r.channel.toString()}`));
+        }
     }
-    if (!feedName || !subName) return [];
-    if (!rcfg.feeds[feedName]) {
-        rcfg.feeds[feedName] = {subs: [], channels: [], hooks: []};
+    for (let hookID of entry.hooks) {
+        let hook: Webhook = await client.fetchWebhook(hookID);
+        hook.send(embed).then(r => console.log(`Sent post to ${r.channel.toString()}`));
     }
-    let sub = r.getSubreddit(subName);
-    let entry = rcfg.feeds[feedName].subs.find((subreddit: {name: string, last: string}) => {
-        return subreddit.name === subName;
+    updateCfg();
+}
+
+export async function subscribeChannelToSub(channel: TextChannel | DMChannel, subname: string) {
+    let entry = rcfg.subs.find((sub) => {
+        return sub.name === subname;
     });
     if (!entry) {
-        entry = {name: subName, last: ''};
-        rcfg.feeds[feedName].subs.push(entry);
-    } else if (entry.last === '') {
-        let last2: Submission[] = await sub.getNew({limit: 2});
-        if (last2[1]) entry.last = last2[1].id;
+        entry = {name: subname, channels: [], hooks: [], last: ''}
+        rcfg.subs.push(entry);
+        let stream: SubmissionStream = new SubmissionStream(r,{subreddit: entry.name, limit: 1, pollTime: 20000});
+        stream.on('item', (submission)=>{sendToFeeds(submission, channel.client)});
+        streams.set(entry.name, stream);
     }
-    let allposts = await sub.getNew({limit: 20});
-    let newposts = [];
-    for (let submission of allposts) {
-        if (submission.id === entry.last) break;
-        newposts.push(submission);
+
+    if (channel instanceof TextChannel && channel.guild.me.hasPermission('MANAGE_WEBHOOKS')) {
+        let hook: Webhook;
+        if (rcfg.webhooks[channel.id]) hook = await channel.client.fetchWebhook(rcfg.webhooks[channel.id]);
+        else {
+            hook = await channel.createWebhook('Reddit Feed');
+            rcfg.webhooks[channel.id] = hook.id;
+        }
+        if (!entry.hooks.includes(hook.id)){
+            entry.hooks.push(hook.id);
+            channel.send(`Der Kanal ${channel.toString()} erhält nun Updates für **r/${subname}**`);
+        }
+        else unsubscribeChannelFromSub(channel, subname);
+    } else {
+        if (!entry.channels.includes(channel.id)) {
+            entry.channels.push(channel.id);
+            channel.send(`${channel.type === 'dm' ? 'Du erhältst' : `Der Kanal ${channel.toString()} erhält`} nun Updates für **r/${subname}**`);
+        }
+        else unsubscribeChannelFromSub(channel, subname);
     }
-    if (newposts.length !== 0) entry.last = newposts[0].id;
     updateCfg();
-    return newposts;
 }
 
-export async function getAllNewPosts(feedName: string): Promise<Submission[]> {
-    if (!feedName) return [];
-    if (!rcfg.feeds[feedName]) {
-        rcfg.feeds[feedName] = {subs: [], channels: [], hooks: []};
-    }
-    let allposts = [];
-    console.log(`Checking subs for ${feedName}...`)
-    for (let sub of rcfg.feeds[feedName].subs) {
-        let posts = await getNewPosts(feedName, sub.name);
-        allposts = posts ? allposts.concat(posts) : allposts;
-        console.log(`Checked ${sub.name}, ${posts ? posts.length : 0} new posts`)
-    }
-    console.log('Done.')
-    allposts.sort((a, b) => {
-        return (a.created > b.created) ? 1 : (a.created < b.created ? -1 : 0);
+export function unsubscribeChannelFromSub(channel: TextChannel | DMChannel, sub: string) {
+    let entry: { name: string, channels: string[], hooks: string[] } = rcfg.subs.find((subreddit) => {
+        return subreddit.name === sub
     });
-    updateCfg();
-    return allposts;
-}
-
-export function addFeed(feedName: string, channelID?: string): void {
-    if (rcfg.feeds[feedName]) return;
-    rcfg.feeds[feedName] = {subs: [], channels: [], hooks: []};
-    if (channelID) rcfg.feeds[feedName].channels.push(channelID);
-    updateCfg();
-}
-
-export function addSubToFeed(feedName: string, subName: string): void {
-    if (!rcfg.feeds[feedName]) addFeed(feedName);
-    if (rcfg.feeds[feedName].subs.filter((sub) => {
-        return sub.name === subName
-    }).length !== 0) return;
-    rcfg.feeds[feedName].subs.push({name: subName, last: ''});
-    updateCfg();
-}
-
-export function removeSubFromFeed(feedName: string, subName: string): void {
-    rcfg.feeds[feedName].subs = rcfg.feeds[feedName].subs.filter((entry) => {
-        return !(entry.name === subName)
-    });
-    updateCfg();
-}
-
-export function subscribeChannelToFeed(feedName: string, channelID: string): void {
-    if (rcfg.feeds[feedName]) rcfg.feeds[feedName].channels.push(channelID);
-    updateCfg();
-}
-
-export function subscribeWebhookToFeed(feedName: string, hookID: string): void {
-    if (rcfg.feeds[feedName]) rcfg.feeds[feedName].hooks.push(hookID);
-    updateCfg();
-}
-
-export function updateFeeds(client: Client) {
-    for (let feed in rcfg.feeds) {
-        updateFeed(feed, client);
+    let index = entry.channels.indexOf(channel.id, 0);
+    if (index > -1) entry.channels.splice(index, 1);
+    if (channel.type === 'text' && channel.guild.me.hasPermission("MANAGE_WEBHOOKS")) {
+        index = entry.hooks.indexOf(rcfg.webhooks[channel.id],0);
+        if (index > -1) entry.hooks.splice(index, 1);
     }
+    channel.send(`Dieser Kanal erhält nun keine Updates für **r/${sub}** mehr.`);
+    updateCfg();
 }
 
-export function updateFeed(feedName: string, client: Client): void {
-    getAllNewPosts(feedName).then((posts) => {
-        submissionsToEmbeds(posts)
-            .then((embeds) => {
-                console.log(`Converted ${posts.length} submissions. Sending...`)
-                let channels: string[] = rcfg.feeds[feedName].channels;
-                let hooks: string[] = rcfg.feeds[feedName].hooks;
-                channels.forEach((channel)=>console.log(`Sending to ${channel}`));
-                hooks.forEach((hook)=>console.log(`Sending via ${hook}`))
-                for (let m of embeds) {
-                    for (let c of channels) {
-                        client.channels.fetch(c).then((channel:TextChannel)=>{
-                            channel.send(m);
-                        })
-                    }
-                    for (let h of hooks) {
-                        client.fetchWebhook(h).then((hook: Webhook)=>{
-                            hook.send(m);
-                        })
-                    }
-                }
-            });
-    })
-}
+
+

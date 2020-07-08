@@ -2,12 +2,11 @@ import Discord = require("discord.js");
 let config = require("./config.json");
 import fs = require("fs");
 import reddit = require("./reddit/reddit");
-import rparse = require("./reddit/redditParser");
 const {feeds} = require("./reddit/redditcfg.json");
 import {Collection, DMChannel, Message, PermissionResolvable, TextBasedChannel, TextChannel} from "discord.js";
 import {type} from "os";
 import Timeout = NodeJS.Timeout;
-import {updateFeeds} from "./reddit/reddit";
+import {updateFeeds} from "./legacycommands/_reddit";
 const client = new Discord.Client();
 const commands: Collection<string, Command> = new Discord.Collection();
 const commandFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('.js'));
@@ -20,8 +19,6 @@ interface Command {
     execute: (message: Message, args: Array<string>) => void
 }
 
-
-
 for (const file of commandFiles) {
     const command: Command = require(`./commands/${file}`);
     commands.set(command.name, command);
@@ -30,8 +27,7 @@ for (const file of commandFiles) {
 // Message on join
 client.once('ready',()=> {
     console.log('Yeet!');
-    reddit.updateFeeds(client);
-    let subchecker: Timeout = setInterval(()=>{reddit.updateFeeds(client)}, 300000);
+    reddit.init(client);
 });
 
 // command handler

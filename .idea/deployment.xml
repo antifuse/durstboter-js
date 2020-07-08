@@ -9,6 +9,7 @@
           </mappings>
           <excludedPaths>
             <excludedPath path="/home/pi/Durstboter/node_modules" />
+            <excludedPath path="/home/pi/Durstboter/legacycommands" />
           </excludedPaths>
         </serverdata>
       </paths>

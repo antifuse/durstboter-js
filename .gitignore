@@ -4,3 +4,5 @@
 /config.json
 /.idea/workspace.xml
 /.idea/deployment.xml
+/legacycommands/
+/reddit/redditcfg.json
