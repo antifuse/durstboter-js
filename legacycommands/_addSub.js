@@ -1,4 +1,4 @@
-const reddit = require('../reddit/reddit');
+const reddit = require('./_reddit');
 
 const Discord = require('discord.js');
 const cfg = require('../config.json')

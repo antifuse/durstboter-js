@@ -1,4 +1,4 @@
-import reddit = require('../reddit/reddit');
+import reddit = require('./_reddit');
 import Discord = require('discord.js');
 import cfg = require('../config.json');
 import rcfg = require('../reddit/redditcfg.json');
