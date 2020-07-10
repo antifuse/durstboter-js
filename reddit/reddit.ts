@@ -12,7 +12,7 @@ import {
     Client,
     Collection, DMChannel,
     PartialTextBasedChannel,
-    PartialTextBasedChannelFields, TextBasedChannel,
+    PartialTextBasedChannelFields, TextBasedChannel, TextBasedChannelFields,
     TextChannel, Webhook
 } from "discord.js";
 import {submissionToEmbed} from "./redditParser";
@@ -45,8 +45,8 @@ let sendToFeeds = async function(submission: Submission, client: Client) {
     entry.last = submission.id;
     let embed = await submissionToEmbed(submission);
     for (let channelID of entry.channels) {
-        let channel: Channel = await client.channels.fetch(channelID);
-        if (channel instanceof (TextChannel || DMChannel)) {
+        let channel = await client.channels.fetch(channelID);
+        if (channel instanceof TextChannel || channel instanceof DMChannel) {
             channel.send(embed).then(r => console.log(`Sent post to ${r.channel.toString()}`));
         }
     }
@@ -59,10 +59,10 @@ let sendToFeeds = async function(submission: Submission, client: Client) {
 
 export async function subscribeChannelToSub(channel: TextChannel | DMChannel, subname: string) {
     let entry = rcfg.subs.find((sub) => {
-        return sub.name === subname;
+        return sub.name.toLowerCase() === subname.toLowerCase();
     });
     if (!entry) {
-        entry = {name: r.getSubreddit(subname).name, channels: [], hooks: [], last: ''}
+        entry = {name: subname.toLowerCase(), channels: [], hooks: [], last: ''}
         rcfg.subs.push(entry);
         let stream: SubmissionStream = new SubmissionStream(r,{subreddit: entry.name, limit: 1, pollTime: 20000});
         stream.on('item', (submission)=>{sendToFeeds(submission, channel.client)});
