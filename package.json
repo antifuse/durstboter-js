@@ -13,9 +13,13 @@
     "@types/node": "^14.0.18",
     "catbox.moe": "^0.1.4",
     "discord.js": "^12.2.0",
+    "node-cron": "^2.0.3",
     "snoostorm": "^1.5.0",
     "snoostream": "^1.0.1",
     "snoowrap": "^1.21.0",
     "ytdl-core": "^3.1.2"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^2.0.3"
   }
 }

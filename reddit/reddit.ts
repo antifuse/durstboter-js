@@ -40,7 +40,7 @@ export function init(client: Client) {
 }
 
 let sendToFeeds = async function(submission: Submission, client: Client) {
-    if (submission.id === rcfg.subs.find((sub)=>{return sub.name === submission.subreddit_name_prefixed.slice(2)}).last) return;
+    if (submission.id === rcfg.subs.find((sub)=>{return sub.name.toLowerCase() === submission.subreddit_name_prefixed.slice(2).toLowerCase()}).last) return;
     rcfg.subs.find((sub)=>{return sub.name === submission.subreddit_name_prefixed.slice(2)}).last = submission.id;
     let embed = await submissionToEmbed(submission);
     let entry = rcfg.subs.find((sub)=>{return sub.name === submission.subreddit_name_prefixed.slice(2)});

@@ -1,15 +1,14 @@
 import Discord = require("discord.js");
-let config = require("./config.json");
 import fs = require("fs");
 import reddit = require("./reddit/reddit");
-const {feeds} = require("./reddit/redditcfg.json");
 import {Collection, DMChannel, Message, PermissionResolvable, TextBasedChannel, TextChannel} from "discord.js";
-import {type} from "os";
-import Timeout = NodeJS.Timeout;
-import {updateFeeds} from "./legacycommands/_reddit";
+import cron = require("node-cron");
+
+
 const client = new Discord.Client();
 const commands: Collection<string, Command> = new Discord.Collection();
 const commandFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('.js'));
+let config = require("./config.json");
 
 interface Command {
     permissions: PermissionResolvable[],
@@ -82,5 +81,11 @@ fs.watch('./reactions.json',(event,name)=> {
 fs.watch('./config.json',(event,name)=> {
     config = require('./config.json');
 });
-
 client.login(config.token).then(r => console.log(r));
+cron.schedule('0 20 * * *', ()=>{
+    config["broadcast-channels"].forEach((id: string)=>{
+        client.channels.fetch(id).then((channel)=>{
+            if (channel instanceof TextChannel || channel instanceof DMChannel) channel.send('TAGESSCHAU O\'CLOCK!');
+        })
+    })
+})
