@@ -40,10 +40,10 @@ export function init(client: Client) {
 }
 
 let sendToFeeds = async function(submission: Submission, client: Client) {
-    if (submission.id === rcfg.subs.find((sub)=>{return sub.name.toLowerCase() === submission.subreddit_name_prefixed.slice(2).toLowerCase()}).last) return;
-    rcfg.subs.find((sub)=>{return sub.name === submission.subreddit_name_prefixed.slice(2)}).last = submission.id;
+    let entry = rcfg.subs.find((sub)=>{return sub.name.toLowerCase() === submission.subreddit_name_prefixed.slice(2).toLowerCase()});
+    if (submission.id === entry.last) return;
+    entry.last = submission.id;
     let embed = await submissionToEmbed(submission);
-    let entry = rcfg.subs.find((sub)=>{return sub.name === submission.subreddit_name_prefixed.slice(2)});
     for (let channelID of entry.channels) {
         let channel: Channel = await client.channels.fetch(channelID);
         if (channel instanceof (TextChannel || DMChannel)) {
@@ -62,7 +62,7 @@ export async function subscribeChannelToSub(channel: TextChannel | DMChannel, su
         return sub.name === subname;
     });
     if (!entry) {
-        entry = {name: subname, channels: [], hooks: [], last: ''}
+        entry = {name: r.getSubreddit(subname).name, channels: [], hooks: [], last: ''}
         rcfg.subs.push(entry);
         let stream: SubmissionStream = new SubmissionStream(r,{subreddit: entry.name, limit: 1, pollTime: 20000});
         stream.on('item', (submission)=>{sendToFeeds(submission, channel.client)});
