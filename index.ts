@@ -24,14 +24,14 @@ for (const file of commandFiles) {
 }
 
 // Message on join
-client.once('ready',()=> {
+client.once('ready', () => {
     console.log('Yeet!');
     reddit.init(client);
 });
 
 // command handler
 client.on('message', message => {
-    if(!message.content.startsWith(config.prefix) || message.author.bot) return;
+    if (!message.content.startsWith(config.prefix) || message.author.bot) return;
     const args = message.content.slice(config.prefix.length).split(/ +/);
     const commandCall = args.shift().toLowerCase();
     const command: Command = commands.get(commandCall) || commands.find((cmd: Command) => cmd.aliases && cmd.aliases.includes(commandCall));
@@ -54,7 +54,7 @@ client.on('message', message => {
 client.on('message', message => {
     // log message
     console.log(message.content);
-    if (!config.logoptout.includes(message.author.id)) fs.appendFile('messages.txt', `${message.author.tag}/${message.channel.id}: ${message.content}\n`,(err)=> {
+    if (!config.logoptout.includes(message.author.id)) fs.appendFile('messages.txt', `${message.author.tag}/${message.channel.id}: ${message.content}\n`, (err) => {
         if (err) console.log(err);
     });
     if (message.author.id === '235148962103951360' && message.channel.id !== '568569976366301205') message.delete().then(r => console.log(`Carl message deleted: ${r.content}`));
@@ -68,23 +68,23 @@ client.on('message', message => {
 // Automatic answers:
 let reactions = require('./reactions.json');
 client.on('message', message => {
-    if (message.author.bot) return;
+    if (message.author.bot || message.content.startsWith(config.prefix)) return;
     for (let r in reactions) {
         if (message.content.toLowerCase().match(r)) message.channel.send(reactions[r]);
     }
 });
 
-fs.watch('./reactions.json',(event,name)=> {
+fs.watch('./reactions.json', (event, name) => {
     reactions = require('./reactions.json');
 });
 
-fs.watch('./config.json',(event,name)=> {
+fs.watch('./config.json', (event, name) => {
     config = require('./config.json');
 });
 client.login(config.token).then(r => console.log(r));
-cron.schedule('0 20 * * *', ()=>{
-    config["broadcast-channels"].forEach((id: string)=>{
-        client.channels.fetch(id).then((channel)=>{
+cron.schedule('0 20 * * *', () => {
+    config["broadcast-channels"].forEach((id: string) => {
+        client.channels.fetch(id).then((channel) => {
             if (channel instanceof TextChannel || channel instanceof DMChannel) channel.send('TAGESSCHAU O\'CLOCK!');
         })
     })
