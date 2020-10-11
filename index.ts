@@ -1,6 +1,5 @@
 import Discord = require("discord.js");
 import fs = require("fs");
-import reddit = require("./reddit/reddit");
 import {Collection, DMChannel, Message, PermissionResolvable, TextBasedChannel, TextChannel} from "discord.js";
 import cron = require("node-cron");
 
