@@ -1,4 +1,5 @@
 import {Message} from "discord.js";
+//@ts-ignore
 import Catbox = require("catbox.moe");
 
 export const name = 'upload'
@@ -7,7 +8,7 @@ export const aliases = ['up', 'hoch', 'ladhoch', 'hochlad']
 export const permissions = []
 
 export function execute(message: Message, args: string[]) {
-    const cb = new Catbox();
+    const cb = new Catbox.Catbox;
     if (args[0]) {
         message.channel.startTyping();
         cb.upload(args[0]).then(link => {
@@ -26,11 +27,11 @@ export function execute(message: Message, args: string[]) {
                 }
                 if (m.embeds.length) {
                     if (m.embeds[0].type === 'image') {
-                        a = m.embeds[0].image.url;
+                        a = m.embeds[0].url;
                         break;
                     }
                     if (m.embeds[0].type === 'video') {
-                        a = m.embeds[0].video.url;
+                        a = m.embeds[0].url;
                         break;
                     }
                 }
