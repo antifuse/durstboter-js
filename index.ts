@@ -10,10 +10,10 @@ const commandFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('
 let config = require("./config.json");
 
 interface Command {
-    permissions: PermissionResolvable[],
-    aliases: string[],
     name: string,
-    description: string,
+    description?: string,
+    permissions?: PermissionResolvable[],
+    aliases?: string[],
     execute: (message: Message, args: Array<string>) => void
 }
 
@@ -35,10 +35,12 @@ client.on('message', message => {
     const command: Command = commands.get(commandCall) || commands.find((cmd: Command) => cmd.aliases && cmd.aliases.includes(commandCall));
     if (!command) return;
     try {
-        for (let perm of command.permissions) {
-            if (!message.member.hasPermission(perm)) {
-                message.channel.send('<:wirklich:711126263514792019>');
-                return;
+        if (command.permissions) {
+            for (let perm of command.permissions) {
+                if (!message.member.hasPermission(perm)) {
+                    message.channel.send('<:wirklich:711126263514792019>');
+                    return;
+                }
             }
         }
         command.execute(message, args);
@@ -62,7 +64,7 @@ client.on('message', message => {
     }
 });
 
-// Automatic answers:
+// Automatic reactions:
 let reactions = require('./reactions.json');
 client.on('message', message => {
     if (message.author.bot) return;
@@ -72,13 +74,20 @@ client.on('message', message => {
 });
 
 fs.watch('./reactions.json',(event,name)=> {
-    reactions = require('./reactions.json');
+    fs.readFile("./reactions.json", {encoding: 'utf8'}, (err, data)=>{
+        if (!err) reactions = JSON.parse(data);
+    });
 });
 
 fs.watch('./config.json',(event,name)=> {
-    config = require('./config.json');
+    fs.readFile("./config.json", {encoding: 'utf8'}, (err, data)=>{
+        if (!err) config = JSON.parse(data);
+    });
 });
-client.login(config.token).then(r => console.log(r));
+
+client.login(config.token)
+    .then(() => console.log("Logging in!"));
+
 cron.schedule('0 20 * * *', ()=>{
     config["broadcast-channels"].forEach((id: string)=>{
         client.channels.fetch(id).then((channel)=>{
