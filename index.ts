@@ -73,13 +73,15 @@ client.on('message', message => {
     }
 });
 
+// Message quadrupling
 client.on('message', async message => {
     if (message.channel.type === 'text' && !message.author.bot) {
         let last2 = (await message.channel.messages.fetch({before: message.id, limit: 2})).array();
-        if (!last2[0].author.bot && !last2[1].author.bot && message.content == last2[0].content && message.content == last2[1].content) message.channel.send(message.content);
+        if (!last2[0].author.bot && !last2[1].author.bot && message.content == last2[0].content && message.content == last2[1].content && !last2[0].author.equals(last2[1].author) && !message.author.equals(last2[0].author) && !message.author.equals(last2[1].author)) message.channel.send(message.content);
     }
 });
 
+// Watch reaction & config files
 fs.watch('./reactions.json',(event,name)=> {
     fs.readFile("./reactions.json", {encoding: 'utf8'}, (err, data)=>{
         if (!err) reactions = JSON.parse(data);
@@ -92,6 +94,7 @@ fs.watch('./config.json',(event,name)=> {
     });
 });
 
+// hold my bot token, i'm going in!
 client.login(config.token)
     .then(() => console.log("Logging in!"));
 
