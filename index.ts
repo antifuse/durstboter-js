@@ -73,6 +73,13 @@ client.on('message', message => {
     }
 });
 
+client.on('message', async message => {
+    if (message.channel.type === 'text' && !message.author.bot) {
+        let last2 = (await message.channel.messages.fetch({before: message.id, limit: 2})).array();
+        if (!last2[0].author.bot && !last2[1].author.bot && message.content == last2[0].content && message.content == last2[1].content) message.channel.send(message.content);
+    }
+});
+
 fs.watch('./reactions.json',(event,name)=> {
     fs.readFile("./reactions.json", {encoding: 'utf8'}, (err, data)=>{
         if (!err) reactions = JSON.parse(data);
