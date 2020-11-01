@@ -20,7 +20,6 @@ export = {
             const stream = ytdl(ytdl.validateURL(args[0]) ? args[0] : 'https://youtube.com/watch?v=dQw4w9WgXcQ', {filter: "audioonly"});
             const dispatch = vcon.play(stream);
             dispatch.on('end', () => channel.leave());
-            stream.on("end", () => channel.leave());
         });
     }
 }
