@@ -1,4 +1,5 @@
 import {DMChannel, Message, TextChannel} from "discord.js";
+import log from "../log"
 
 export = {
     name: 'sendmsg',
@@ -13,7 +14,7 @@ export = {
         let content = args[1] || '_ _';
         message.client.channels.fetch(args[0]).then(channel => {
             if (channel instanceof TextChannel || channel instanceof DMChannel) {
-                channel.send(content);
+                channel.send(content).then((mess)=>log.info(`Sent message ${mess.content} to ${mess.channel.id}`))
             } else {
                 message.channel.send('<:wirklich:711126263514792019>');
             }

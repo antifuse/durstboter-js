@@ -1,5 +1,6 @@
-import Discord = require('discord.js');
+import * as Discord from "discord.js";
 import {Message} from "discord.js";
+import log from "../log";
 
 export = {
     name: 'avatar',
@@ -11,7 +12,7 @@ export = {
             let mentioned = message.mentions.members.array();
             if (mentioned.length < 1) {
                 for (let arg of args) {
-                    console.log(arg);
+                    log.info(arg);
                     let user = undefined;
                     let fetched = await message.guild.members.fetch({query: arg, limit: 1});
                     user = fetched.array()[0];
@@ -27,7 +28,7 @@ export = {
                         .setColor(message.member.displayHexColor)
                         .setTitle(`Avatar von ${message.author.tag}`)
                         .setImage(message.author.avatarURL({size: 4096}))
-                ).catch(reason => console.log(reason));
+                ).catch(reason => log.error(reason));
                 return;
             }
             for (let user of r) {
@@ -36,7 +37,7 @@ export = {
                         .setColor(user.displayHexColor)
                         .setTitle(`Avatar von ${user.user.tag}`)
                         .setImage(user.user.avatarURL({size: 4096}))
-                ).catch(reason => console.log(reason));
+                ).catch(reason => log.error(reason));
             }
         });
     }

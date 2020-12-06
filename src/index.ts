@@ -1,30 +1,40 @@
 import Discord = require("discord.js");
 import fs = require("fs");
-import {Collection, DMChannel, Message, PermissionResolvable, TextBasedChannel, TextChannel} from "discord.js";
+import {Collection, DMChannel, Message, PermissionResolvable, TextBasedChannel, TextChannel, Channel} from "discord.js";
 import cron = require("node-cron");
+import * as winston from "winston";
 
+import log from "./log";
 
 const client = new Discord.Client();
 const commands: Collection<string, Command> = new Discord.Collection();
-const commandFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('.js'));
-let config = require("./config.json");
+const commandFiles = fs.readdirSync(`./build/commands`).filter(file => file.endsWith('.js'));
+let config: any;
+fs.readFile("./config.json", {encoding: 'utf8'}, (err, data)=>{
+    if (!err) config = JSON.parse(data);
+});
+log.info("Loaded config.");
 
 interface Command {
     name: string,
     description?: string,
     permissions?: PermissionResolvable[],
     aliases?: string[],
-    execute: (message: Message, args: Array<string>) => void
+    execute: (message: Message, args: Array<string>) => void,
+    log: (message: string) => void
 }
 
 for (const file of commandFiles) {
     const command: Command = require(`./commands/${file}`);
+    command.log = (message)=>log.info(message);
     commands.set(command.name, command);
 }
 
+log.info(`Loaded ${commands.size} commands`);
+
 // Message on join
 client.once('ready',()=> {
-    console.log('Yeet!');
+    log.info('Ready.');
 });
 
 // command handler
@@ -45,7 +55,7 @@ client.on('message', message => {
         }
         command.execute(message, args);
     } catch (e) {
-        console.error(e);
+        log.error(e);
         message.channel.send('<:nundann:724343174256001135>');
     }
 });
@@ -53,19 +63,23 @@ client.on('message', message => {
 // DM logger
 client.on('message', message => {
     // log message
-    console.log(message.content);
+    log.info(`${message.author.tag}/${message.channel.id}: ${message.content}`);
     if (!config.logoptout.includes(message.author.id)) fs.appendFile('messages.txt', `${message.author.tag}/${message.channel.id}: ${message.content}\n`,(err)=> {
-        if (err) console.log(err);
+        if (err) log.error(err);
     });
     // log dms to dmlog
     if (message.channel.type === 'dm') {
         client.channels.fetch(config.dmlog)
-            .then((channel: DMChannel) => channel.send(`${message.author.tag} : ${message.content}`));
+            .then((channel: Channel) => {if (channel instanceof DMChannel) channel.send(`${message.author.tag} : ${message.content}`)});
     }
 });
 
+let reactions: any;
 // Automatic reactions:
-let reactions = require('./reactions.json');
+fs.readFile("./reactions.json", {encoding: 'utf8'}, (err, data)=>{
+    if (!err) reactions = JSON.parse(data);
+});
+log.info("Loaded reactions.")
 client.on('message', message => {
     if (message.author.bot) return;
     for (let r in reactions) {
@@ -86,17 +100,18 @@ fs.watch('./reactions.json',(event,name)=> {
     fs.readFile("./reactions.json", {encoding: 'utf8'}, (err, data)=>{
         if (!err) reactions = JSON.parse(data);
     });
+    log.info("Reloaded reactions.")
 });
 
 fs.watch('./config.json',(event,name)=> {
     fs.readFile("./config.json", {encoding: 'utf8'}, (err, data)=>{
         if (!err) config = JSON.parse(data);
     });
+    log.info("Reloaded config.")
 });
 
 // hold my bot token, i'm going in!
-client.login(config.token)
-    .then(() => console.log("Logging in!"));
+client.login(config.token);
 
 cron.schedule('0 20 * * *', ()=>{
     config["broadcast-channels"].forEach((id: string)=>{

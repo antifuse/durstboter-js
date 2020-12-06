@@ -1,4 +1,5 @@
 import {Message} from "discord.js";
+import log from "../log"
 
 export = {
     name: 'stop',

@@ -1,5 +1,7 @@
 import {Message} from "discord.js";
-const axios = require("axios").default;
+import * as Axios from "axios"
+import log from "../log"
+const axios = Axios.default;
 
 export = {
     name: 'inspirobot',
@@ -9,7 +11,7 @@ export = {
     execute(message: Message, args: string[]) {
         axios.get('http://inspirobot.me/api?generate=true')
             .then(r=>{
-                message.channel.send({files: [r.data]}).then(()=>console.log('Inspiring pic sent.'))
+                message.channel.send({files: [r.data]}).then(()=>log.info('Inspiring pic sent.'))
             })
     }
 }

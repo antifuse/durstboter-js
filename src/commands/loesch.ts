@@ -1,4 +1,5 @@
 import {Message, DMChannel} from "discord.js";
+import log from "../log"
 
 export = {
     name: 'loesch',
@@ -12,6 +13,6 @@ export = {
             return;
         }
         message.channel.bulkDelete(parseInt(args[0]) + 1)
-            .then(messages => console.log(`Löschte ${messages.size} Nachrichten`));
+            .then(messages => log.info(`Löschte ${messages.size} Nachrichten`));
     }
 }

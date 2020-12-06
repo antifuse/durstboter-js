@@ -1,6 +1,7 @@
 import {Message} from "discord.js";
-
-const axios = require("axios").default
+import * as Axios from "axios"
+import log from "../log"
+const axios = Axios.default;
 
 export = {
     name: 'durstlöscher',
@@ -11,7 +12,7 @@ export = {
         axios.get('http://localhost/durstloescher/random').then(r => {
             message.channel.send({content: `Durstlöscher von ${r.data.poster}`, files: [r.data.pic]})
                 .then(() => {
-                    console.log(`Durstlöscher pic ${r.data.counter} sent to ${message.channel.toString()}`)
+                    log.info(`Durstlöscher pic ${r.data.counter} sent to ${message.channel.toString()}`)
                 })
         })
     }

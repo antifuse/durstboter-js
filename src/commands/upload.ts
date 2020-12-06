@@ -1,6 +1,7 @@
 import {Message} from "discord.js";
 //@ts-ignore
-import Catbox = require("catbox.moe");
+import * as Catbox from "catbox.moe"
+import log from "../log"
 
 export = {
     name: 'upload',
@@ -11,7 +12,8 @@ export = {
         const cb = new Catbox.Catbox;
         if (args[0]) {
             message.channel.startTyping();
-            cb.upload(args[0]).then(link => {
+            
+            cb.upload(args[0]).then((link:string) => {
                 message.channel.send(link);
                 message.channel.stopTyping();
             });
@@ -40,7 +42,7 @@ export = {
                     message.channel.send('<:wirklich:711126263514792019>');
                 } else {
                     message.channel.startTyping();
-                    cb.upload(a).then(link => {
+                    cb.upload(a).then((link:string) => {
                         message.channel.send(link);
                         message.channel.stopTyping();
                     });

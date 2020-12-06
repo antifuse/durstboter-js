@@ -1,5 +1,6 @@
 import ytdl = require('ytdl-core');
 import {Message} from "discord.js";
+import log from "../log"
 
 export = {
     name: 'play',

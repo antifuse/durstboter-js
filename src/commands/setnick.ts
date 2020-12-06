@@ -1,4 +1,5 @@
 import {Message} from "discord.js";
+import log from "../log"
 
 export = {
     name: 'setnick',
@@ -12,7 +13,7 @@ export = {
         }
         let newnick = args.join(' ');
         message.guild.me.setNickname(newnick).then(r => {
-            console.log(`Nickname set to ${r.nickname}`);
+            log.info(`Nickname on ${r.guild.name} set to ${r.nickname}`);
             message.channel.send('Ich tat es, Lases!');
         });
     }
