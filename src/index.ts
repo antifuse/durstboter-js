@@ -2,7 +2,7 @@ import Discord = require("discord.js");
 import fs = require("fs");
 import { Collection, DMChannel, Message, PermissionResolvable, TextBasedChannel, TextChannel, Channel } from "discord.js";
 //@ts-ignore
-import * as Steamapi from "steamapi";
+import Steamapi = require("steamapi");
 import cron = require("node-cron");
 import * as winston from "winston";
 import log from "./log";
@@ -11,7 +11,7 @@ const client = new Discord.Client();
 const commands: Collection<string, Command> = new Discord.Collection();
 const commandFiles = fs.readdirSync(`./build/commands`).filter(file => file.endsWith('.js'));
 let config = JSON.parse(fs.readFileSync("./config.json", { encoding: 'utf8' }));
-const steam = Steamapi(config.steamauth);
+const steam = new Steamapi(config.steamauth);
 log.info("Loaded config.");
 
 interface Command {
