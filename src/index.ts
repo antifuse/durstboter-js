@@ -125,7 +125,7 @@ let semarcplaying = "";
 cron.schedule('*/5 * * * *', ()=>{
     steam.getUserSummary('76561198062163607').then((summary:any)=>{
         if (summary.gameExtraInfo && summary.gameExtraInfo != semarcplaying) {
-            semarcplaying = summary.gameextrainfo;
+            semarcplaying = summary.gameExtraInfo;
             config["broadcast-channels"].forEach((id:string)=>{
                 client.channels.fetch(id).then((channel) => {
                     if (channel instanceof TextChannel || channel instanceof DMChannel) channel.send(`Semarc spielt **${summary.gameExtraInfo}**`);
