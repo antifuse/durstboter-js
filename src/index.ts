@@ -11,7 +11,7 @@ const client = new Discord.Client();
 const commands: Collection<string, Command> = new Discord.Collection();
 const commandFiles = fs.readdirSync(`./build/commands`).filter(file => file.endsWith('.js'));
 let config = JSON.parse(fs.readFileSync("./config.json", { encoding: 'utf8' }));
-const steam = new Steamapi(config.steamauth);
+const steam = Steamapi(config.steamauth);
 log.info("Loaded config.");
 
 interface Command {
