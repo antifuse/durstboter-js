@@ -20,6 +20,7 @@
     "node-cron": "^2.0.3",
     "nodemw": "^0.13.0",
     "opusscript": "0.0.7",
+    "steamapi": "^2.1.2",
     "winston": "^3.3.3",
     "ytdl-core": "^3.1.2"
   },

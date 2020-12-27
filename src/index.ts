@@ -1,15 +1,17 @@
 import Discord = require("discord.js");
 import fs = require("fs");
 import { Collection, DMChannel, Message, PermissionResolvable, TextBasedChannel, TextChannel, Channel } from "discord.js";
+//@ts-ignore
+import * as Steamapi from "steamapi";
 import cron = require("node-cron");
 import * as winston from "winston";
-
 import log from "./log";
 
 const client = new Discord.Client();
 const commands: Collection<string, Command> = new Discord.Collection();
 const commandFiles = fs.readdirSync(`./build/commands`).filter(file => file.endsWith('.js'));
 let config = JSON.parse(fs.readFileSync("./config.json", { encoding: 'utf8' }));
+const steam = new Steamapi(config.steamauth);
 log.info("Loaded config.");
 
 interface Command {
@@ -112,10 +114,23 @@ fs.watch('./config.json', (event, name) => {
 // hold my bot token, i'm going in!
 client.login(config.token);
 
-cron.schedule('0 20 * * *', () => {
-    config["broadcast-channels"].forEach((id: string) => {
-        client.channels.fetch(id).then((channel) => {
-            if (channel instanceof TextChannel || channel instanceof DMChannel) channel.send('TAGESSCHAU O\'CLOCK!');
-        })
+//cron.schedule('0 20 * * *', () => {
+//    config["broadcast-channels"].forEach((id: string) => {
+//        client.channels.fetch(id).then((channel) => {
+//            if (channel instanceof TextChannel || channel instanceof DMChannel) channel.send('TAGESSCHAU O\'CLOCK!');
+//        })
+//    })
+//})
+let semarcplaying = "";
+cron.schedule('*/5 * * * *', ()=>{
+    steam.getUserSummary('76561198062163607').then((summary:any)=>{
+        if (summary.gameextrainfo && summary.gameextrainfo != semarcplaying) {
+            semarcplaying = summary.gameextrainfo;
+            config["broadcast-channels"].forEach((id:string)=>{
+                client.channels.fetch(id).then((channel) => {
+                    if (channel instanceof TextChannel || channel instanceof DMChannel) channel.send(`Semarc spielt **${summary.gameextrainfo}**`);
+                })
+            })
+        }
     })
 })
