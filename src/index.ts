@@ -14,13 +14,13 @@ let config = JSON.parse(fs.readFileSync("./config.json", { encoding: 'utf8' }));
 const steam = new Steamapi(config.steamauth);
 log.info("Loaded config.");
 
-interface Command {
+export interface Command {
     name: string,
     description?: string,
     permissions?: PermissionResolvable[],
     aliases?: string[],
     execute: (message: Message, args: Array<string>) => void,
-    log: (message: string) => void
+    log?: (message: string) => void
 }
 
 for (const file of commandFiles) {
@@ -122,16 +122,19 @@ client.login(config.token);
 //    })
 //})
 let semarcplaying = "";
-cron.schedule('*/5 * * * *', () => {
+cron.schedule('*/2 * * * *', () => {
     steam.getUserSummary('76561198062163607').then((summary: any) => {
+        if (summary.gameExtraInfo) client.user.setPresence({activity: {type: "PLAYING", name: summary.gameExtraInfo}});
+        else if (summary.personastate != 0) client.user.setPresence({activity: {type: "PLAYING", name: ""}});
+        else client.user.setPresence({activity: undefined})
         if (summary.gameExtraInfo != semarcplaying) {
             semarcplaying = summary.gameExtraInfo || "";
             if (!summary.gameExtraInfo) return;
             config["broadcast-channels"].forEach((id: string) => {
                 client.channels.fetch(id).then((channel) => {
                     if (channel instanceof TextChannel || channel instanceof DMChannel) channel.send(`Semarc spielt **${summary.gameExtraInfo}**`);
-                })
-            })
+                });
+            });
         }
-    })
-})
+    });
+});
