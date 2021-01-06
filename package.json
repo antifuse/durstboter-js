@@ -12,7 +12,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "catbox.moe": "^1.0.1",
     "discord.js": "^12.2.0",
     "mediawiki": "0.0.14",
