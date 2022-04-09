@@ -371,8 +371,8 @@ winston@^3.3.3:
     winston-transport "^4.4.0"
 
 ws@^7.3.1:
-  version "7.4.2"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-7.4.2.tgz"
+  version "7.5.7"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.7.tgz#9e0ac77ee50af70d58326ecff7e85eb3fa375e67"
 
 ytdl-core@^3.1.2:
   version "3.4.2"
